@@ -18,7 +18,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 }
 
 // Обработчик для отображения содержимого заметки.
-func showSnippet(w http.ResponseWriter, r *http.Request) {
+func showSnippet(w http.ResponseWriter, _ *http.Request) {
 	_, err := w.Write([]byte("Отображение заметки..."))
 	if err != nil {
 		return
@@ -27,6 +27,11 @@ func showSnippet(w http.ResponseWriter, r *http.Request) {
 
 // Обработчик для создания новой заметки.
 func createSnippet(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		http.Error(w, "Метод запрещен!", 405)
+		return
+	}
 	_, err := w.Write([]byte("Форма для создания новой заметки..."))
 	if err != nil {
 		return
@@ -34,8 +39,7 @@ func createSnippet(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// Регистрируем два новых обработчика и соответствующие URL-шаблоны в
-	// маршрутизаторе servemux
+	// Регистрируем два новых обработчика и соответствующие URL-шаблоны в маршрутизаторе servemux
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", home)
 	mux.HandleFunc("/snippet", showSnippet)
