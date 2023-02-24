@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 // Обработчик главной страницы.
@@ -18,8 +20,13 @@ func home(w http.ResponseWriter, r *http.Request) {
 }
 
 // Обработчик для отображения содержимого заметки.
-func showSnippet(w http.ResponseWriter, _ *http.Request) {
-	_, err := w.Write([]byte("Отображение заметки..."))
+func showSnippet(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil || id < 1 {
+		http.NotFound(w, r)
+		return
+	}
+	_, err = fmt.Fprintf(w, "Отображение выбранной заметки с ID %d...", id)
 	if err != nil {
 		return
 	}
@@ -39,7 +46,6 @@ func createSnippet(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// Регистрируем два новых обработчика и соответствующие URL-шаблоны в маршрутизаторе servemux
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", home)
 	mux.HandleFunc("/snippet", showSnippet)
