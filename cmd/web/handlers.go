@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"path"
 	"strconv"
-	"time"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -16,35 +15,26 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-
 	s, err := app.snippets.Latest()
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	for _, snippet := range s {
-		_, err := fmt.Fprintf(w, "%v\n", snippet)
-		if err != nil {
-			app.serverError(w, err)
-			return
-		}
+	data := &templateData{Snippets: s}
+	files := []string{
+		"./ui/html/home.page.tmpl",
+		"./ui/html/base.layout.tmpl",
+		"./ui/html/footer.partial.tmpl",
 	}
+	ts, err := template.New(path.Base(files[0])).Funcs(template.FuncMap{
+		"intToDatetime": intToDatetime,
+	}).ParseFiles(files...)
 
-	//files := []string{
-	//	"./ui/html/home.page.tmpl",
-	//	"./ui/html/base.layout.tmpl",
-	//	"./ui/html/footer.partial.tmpl",
-	//}
-	//ts, err := template.ParseFiles(files...)
-	//if err != nil {
-	//	app.serverError(w, err)
-	//	return
-	//}
-	//err = ts.Execute(w, nil)
-	//if err != nil {
-	//	app.serverError(w, err)
-	//}
+	err = ts.Execute(w, data)
+	if err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
@@ -70,11 +60,7 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		"./ui/html/footer.partial.tmpl",
 	}
 	ts, err := template.New(path.Base(files[0])).Funcs(template.FuncMap{
-		"intToDatetime": func(value int) string {
-			t := time.Unix(int64(value), 0)
-			f := t.Format("2006-01-02 15:04:05")
-			return f
-		},
+		"intToDatetime": intToDatetime,
 	}).ParseFiles(files...)
 
 	err = ts.Execute(w, data)
