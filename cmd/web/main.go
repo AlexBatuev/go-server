@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"flag"
 	_ "github.com/mattn/go-sqlite3"
+	"go-server/pkg/models/sqlite"
 	"log"
 	"net/http"
 	"os"
@@ -12,6 +13,7 @@ import (
 type application struct {
 	errorLog *log.Logger
 	infoLog  *log.Logger
+	snippets *sqlite.SnippetModel
 }
 
 func main() {
@@ -36,6 +38,7 @@ func main() {
 	app := &application{
 		errorLog: errorLog,
 		infoLog:  infoLog,
+		snippets: &sqlite.SnippetModel{DB: db},
 	}
 
 	srv := &http.Server{
