@@ -13,7 +13,8 @@ type SnippetModel struct {
 }
 
 func (m *SnippetModel) Insert(title, content string, expires int64) (int, error) {
-	query := "INSERT INTO snippets (title,content,created,expires) VALUES (?,?,?,?);"
+	query := `INSERT INTO snippets (title,content,created,expires) 
+              VALUES (?,?,?,?);`
 	now := time.Now()
 	result, err := m.DB.Exec(query, title, content, now.Unix(), now.Unix()+expires)
 	if err != nil {
@@ -28,7 +29,9 @@ func (m *SnippetModel) Insert(title, content string, expires int64) (int, error)
 
 // Get - Метод для возвращения данных заметки по её идентификатору ID.
 func (m *SnippetModel) Get(id int) (*models.Snippet, error) {
-	query := "SELECT ROWID, title, content, created, expires FROM snippets WHERE expires > ? AND ROWID = ?;"
+	query := `SELECT ROWID, title, content, created, expires 
+              FROM snippets 
+              WHERE expires > ? AND ROWID = ?;`
 	now := time.Now().Unix()
 	row := m.DB.QueryRow(query, now, id)
 	s := &models.Snippet{}
@@ -45,5 +48,34 @@ func (m *SnippetModel) Get(id int) (*models.Snippet, error) {
 
 // Latest - Метод возвращает 10 наиболее часто используемые заметки.
 func (m *SnippetModel) Latest() ([]*models.Snippet, error) {
-	return nil, nil
+	query := `SELECT ROWID, title, content, created, expires 
+              FROM snippets 
+              WHERE expires > 1677405409 
+              ORDER BY created DESC LIMIT 10;`
+	rows, err := m.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			return
+		}
+	}(rows)
+
+	var snippets []*models.Snippet
+	for rows.Next() {
+		s := &models.Snippet{}
+		err = rows.Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires)
+		if err != nil {
+			return nil, err
+		}
+		snippets = append(snippets, s)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return snippets, nil
 }
