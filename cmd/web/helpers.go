@@ -29,3 +29,15 @@ func intToDatetime(value int) string {
 	f := t.Format("2006-01-02 15:04:05")
 	return f
 }
+
+func (app *application) render(w http.ResponseWriter, _ *http.Request, name string, td *templateData) {
+	ts, ok := app.templateCache[name]
+	if !ok {
+		app.serverError(w, fmt.Errorf("шаблон %s не существует", name))
+		return
+	}
+	err := ts.Execute(w, td)
+	if err != nil {
+		app.serverError(w, err)
+	}
+}

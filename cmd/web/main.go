@@ -5,15 +5,17 @@ import (
 	"flag"
 	_ "github.com/mattn/go-sqlite3"
 	"go-server/pkg/models/sqlite"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
 )
 
 type application struct {
-	errorLog *log.Logger
-	infoLog  *log.Logger
-	snippets *sqlite.SnippetModel
+	errorLog      *log.Logger
+	infoLog       *log.Logger
+	snippets      *sqlite.SnippetModel
+	templateCache map[string]*template.Template
 }
 
 func main() {
@@ -35,10 +37,16 @@ func main() {
 		}
 	}(db)
 
+	templateCache, err := newTemplateCache("./ui/html/")
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
 	app := &application{
-		errorLog: errorLog,
-		infoLog:  infoLog,
-		snippets: &sqlite.SnippetModel{DB: db},
+		errorLog:      errorLog,
+		infoLog:       infoLog,
+		snippets:      &sqlite.SnippetModel{DB: db},
+		templateCache: templateCache,
 	}
 
 	srv := &http.Server{
