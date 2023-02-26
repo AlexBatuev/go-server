@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"go-server/pkg/models"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -34,8 +36,18 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		app.notFound(w)
 		return
 	}
-	_, err = fmt.Fprintf(w, "Отображение выбранной заметки с ID %d...", id)
+	s, err := app.snippets.Get(id)
 	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+	_, err = fmt.Fprintf(w, "%v", s)
+	if err != nil {
+		app.serverError(w, err)
 		return
 	}
 }
@@ -57,5 +69,4 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, fmt.Sprintf("/snippet?id=%d", id), http.StatusSeeOther)
-
 }
