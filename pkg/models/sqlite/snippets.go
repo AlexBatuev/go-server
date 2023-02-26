@@ -3,6 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"go-server/pkg/models"
+	"time"
 )
 
 // SnippetModel - Определяем тип который обертывает пул подключения sql.DB
@@ -11,8 +12,20 @@ type SnippetModel struct {
 }
 
 // Insert - Метод для создания новой заметки в базе дынных.
-func (m *SnippetModel) Insert(title, content, expires string) (int, error) {
-	return 0, nil
+func (m *SnippetModel) Insert(title, content string, expires int64) (int, error) {
+	stmt := "INSERT INTO snippets (title,content,created,expires) VALUES (?,?,?,?);"
+	now := time.Now()
+	result, err := m.DB.Exec(stmt, title, content, now.Unix(), now.Unix()+expires)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(id), nil
 }
 
 // Get - Метод для возвращения данных заметки по её идентификатору ID.
