@@ -4,8 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"go-server/pkg/models"
+	"html/template"
 	"net/http"
+	"path"
 	"strconv"
+	"time"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -59,10 +62,24 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	_, err = fmt.Fprintf(w, "%v", s)
+
+	data := &templateData{Snippet: s}
+	files := []string{
+		"./ui/html/show.page.tmpl",
+		"./ui/html/base.layout.tmpl",
+		"./ui/html/footer.partial.tmpl",
+	}
+	ts, err := template.New(path.Base(files[0])).Funcs(template.FuncMap{
+		"intToDatetime": func(value int) string {
+			t := time.Unix(int64(value), 0)
+			f := t.Format("2006-01-02 15:04:05")
+			return f
+		},
+	}).ParseFiles(files...)
+
+	err = ts.Execute(w, data)
 	if err != nil {
 		app.serverError(w, err)
-		return
 	}
 }
 
